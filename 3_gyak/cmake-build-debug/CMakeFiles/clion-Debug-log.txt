@@ -1,1 +1,0 @@
-CMakeLists.txt not found in C:\Users\Dog\CLionProjects\grafika\3_gyak Select CMakeLists.txt
