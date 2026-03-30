@@ -1,0 +1,116 @@
+#include "game.h"
+#include <GL/gl.h>
+#include <stdio.h>
+
+void init_game(Game* game, int width, int height)
+{
+    game->is_running = false;
+    game->width = width;
+    game->height = height;
+    if (init_sdl(game) == false) {
+        return;
+    }
+    init_opengl(game);
+    init_pong(&(game->pong), width, height);
+    game->last_update_time = (double)SDL_GetTicks() / 1000;
+    game->is_running = true;
+}
+
+void destroy_game(Game* game)
+{
+    if (game->gl_context != NULL) {
+        SDL_GL_DeleteContext(game->gl_context);
+    }
+    if (game->window != NULL) {
+        SDL_DestroyWindow(game->window);
+    }
+    SDL_Quit();
+}
+
+void handle_game_events(Game* game)
+{
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_KEYDOWN:
+            switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_ESCAPE: game->is_running = false; break;
+            case SDL_SCANCODE_W: set_left_pad_speed(&(game->pong), -400); break;
+            case SDL_SCANCODE_S: set_left_pad_speed(&(game->pong), +400); break;
+            // MÉRET VÁLTOZTATÁSA
+            case SDL_SCANCODE_KP_PLUS: 
+            case SDL_SCANCODE_EQUALS: change_ball_radius(&(game->pong.ball), 5); break;
+            case SDL_SCANCODE_KP_MINUS: 
+            case SDL_SCANCODE_MINUS: change_ball_radius(&(game->pong.ball), -5); break;
+            default: break;
+            }
+            break;
+        case SDL_KEYUP:
+            switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_W:
+            case SDL_SCANCODE_S: set_left_pad_speed(&(game->pong), 0); break;
+            default: break;
+            }
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                // LABDA ÁTHELYEZÉSE KATTINTÁSRA
+                game->pong.ball.x = event.button.x;
+                game->pong.ball.y = event.button.y;
+            }
+            break;
+        case SDL_MOUSEMOTION:
+            set_right_pad_position(&(game->pong), event.motion.y - game->pong.right_pad.height / 2);
+            break;
+        case SDL_QUIT: game->is_running = false; break;
+        }
+    }
+}
+
+void update_game(Game* game)
+{
+    double current_time;
+    double elapsed_time;
+
+    current_time = (double)SDL_GetTicks() / 1000;
+    elapsed_time = current_time - game->last_update_time;
+    game->last_update_time = current_time;
+
+    update_pong(&(game->pong), elapsed_time);
+}
+
+void render_game(Game* game)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    render_pong(&(game->pong));
+    SDL_GL_SwapWindow(game->window);
+}
+
+bool init_sdl(Game* game)
+{
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        printf("[ERROR] SDL error: %s\n", SDL_GetError());
+        return false;
+    }
+
+    game->window = SDL_CreateWindow(
+        "Pong!",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        game->width, game->height,
+        SDL_WINDOW_OPENGL);
+
+    if (game->window == NULL) return false;
+
+    game->gl_context = SDL_GL_CreateContext(game->window);
+    return (game->gl_context != NULL);
+}
+
+void init_opengl(Game* game)
+{
+    glShadeModel(GL_SMOOTH);
+    glClearColor(0.1, 0.1, 0.1, 1.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, game->width, game->height, 0, -200, 200);
+    glViewport(0, 0, game->width, game->height);
+}

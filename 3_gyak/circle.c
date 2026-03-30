@@ -44,7 +44,7 @@ void draw_approximated_circle(SDL_Renderer* renderer, const Circle* circle) {
 
 int main(int argc, char* argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window* window = SDL_CreateWindow("Circles", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 768, SDL_WINDOW_FULLSCREEN);
+    SDL_Window* window = SDL_CreateWindow("Circles", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 768);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     Circle circles[MAX_CIRCLE_COUNT];
